@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg-page: #0f172a;
+      --bg-header: rgba(30, 41, 59, 0.9);
+      --bg-input: #1e293b;
+      --bg-bubble-user: #7c3aed;
+      --bg-bubble-bot: rgba(51, 65, 85, 0.8);
+      --border: rgba(71, 85, 105, 0.5);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+      --radius: 0.75rem;
+      --radius-lg: 1rem;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-header);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-inner {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .header-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #7c3aed, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
+    }
+    .header-icon svg { width: 1.25rem; height: 1.25rem; color: #fff; }
+    .header-title { font-weight: 600; font-size: 1.125rem; color: var(--text); }
+    .header-status { font-size: 0.75rem; color: var(--text-muted); }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-width: 42rem;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      min-height: 12rem;
+    }
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .welcome-icon {
+      width: 4rem;
+      height: 4rem;
+      border-radius: var(--radius-lg);
+      background: rgba(51, 65, 85, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .welcome-icon svg { width: 2rem; height: 2rem; color: #a78bfa; }
+    .welcome p:first-of-type { font-size: 0.875rem; font-weight: 500; color: #cbd5e1; }
+    .welcome p:last-of-type { font-size: 0.75rem; margin-top: 0.25rem; max-width: 15rem; }
+    .row { display: flex; }
+    .row.user { justify-content: flex-end; }
+    .row.bot { justify-content: flex-start; }
+    .bubble {
+      max-width: 85%;
+      padding: 0.625rem 1rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.9375rem;
+      line-height: 1.4;
+    }
+    .row.user .bubble {
+      background: var(--bg-bubble-user);
+      color: #fff;
+      border-bottom-right-radius: 0.25rem;
+    }
+    .row.bot .bubble {
+      background: var(--bg-bubble-bot);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 0.25rem;
+    }
+    .form-wrap { flex-shrink: 0; padding-top: 0.5rem; }
+    .chat-form {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font: inherit;
+      font-size: 1rem;
+    }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+    }
+    .chat-input:disabled { opacity: 0.7; cursor: not-allowed; }
+    .send-btn {
+      flex-shrink: 0;
+      width: 3rem;
+      height: 3rem;
+      border: none;
+      border-radius: var(--radius-lg);
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+      transition: background 0.2s, transform 0.1s;
+    }
+    .send-btn:hover:not(:disabled) { background: #7c3aed; }
+    .send-btn:active:not(:disabled) { transform: scale(0.95); }
+    .send-btn:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--accent);
+    }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .send-btn svg { width: 1.25rem; height: 1.25rem; }
+    @media (min-width: 640px) {
+      .bubble { max-width: 75%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="header-title">Asistente</h1>
+        <p class="header-status">En línea</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="chat-container" class="chat-container">
+      <div id="welcome" class="welcome">
+        <div class="welcome-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <p>¿En qué puedo ayudarte?</p>
+        <p>Escribe un mensaje y pulsa enviar.</p>
+      </div>
+    </div>
+
+    <div class="form-wrap">
+      <form id="chat-form" class="chat-form">
+        <input type="text" id="message-input" class="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off" />
+        <button type="submit" id="send-btn" class="send-btn" aria-label="Enviar mensaje">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var chatContainer = document.getElementById('chat-container');
+      var welcome = document.getElementById('welcome');
+      var form = document.getElementById('chat-form');
+      var input = document.getElementById('message-input');
+      var sendBtn = document.getElementById('send-btn');
+
+      function scrollToBottom() {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      function addMessage(text, isUser) {
+        if (welcome && welcome.parentNode) welcome.parentNode.removeChild(welcome);
+        var row = document.createElement('div');
+        row.className = 'row ' + (isUser ? 'user' : 'bot');
+        var bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        chatContainer.appendChild(row);
+        scrollToBottom();
+      }
+
+      function setLoading(loading) {
+        sendBtn.disabled = loading;
+        input.disabled = loading;
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var text = (input.value || '').trim();
+        if (!text) return;
+        input.value = '';
+        addMessage(text, true);
+        setLoading(true);
+        setTimeout(function () {
+          addMessage('Gracias por tu mensaje. Aquí iría la respuesta del bot.', false);
+          setLoading(false);
+          scrollToBottom();
+        }, 600);
+      });
+
+      if (input) input.focus();
+    })();
+  </script>
+</body>
+</html>
