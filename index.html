@@ -1,219 +1,125 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chatbot</title>
+  <title>Asistente IA — Respuestas al instante</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          borderRadius: { DEFAULT: '8px', lg: '12px' },
+          boxShadow: {
+            'card': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+            'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+          }
+        }
+      }
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    :root {
-      --bg-page: #0f172a;
-      --bg-header: rgba(30, 41, 59, 0.9);
-      --bg-input: #1e293b;
-      --bg-bubble-user: #7c3aed;
-      --bg-bubble-bot: rgba(51, 65, 85, 0.8);
-      --border: rgba(71, 85, 105, 0.5);
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent: #8b5cf6;
-      --radius: 0.75rem;
-      --radius-lg: 1rem;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg-page);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      display: flex;
-      flex-direction: column;
-    }
-    .header {
-      flex-shrink: 0;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-header);
-      backdrop-filter: blur(8px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    .header-inner {
-      max-width: 42rem;
-      margin: 0 auto;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .header-icon {
-      width: 2.5rem;
-      height: 2.5rem;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, #7c3aed, #9333ea);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25);
-    }
-    .header-icon svg { width: 1.25rem; height: 1.25rem; color: #fff; }
-    .header-title { font-weight: 600; font-size: 1.125rem; color: var(--text); }
-    .header-status { font-size: 0.75rem; color: var(--text-muted); }
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      max-width: 42rem;
-      width: 100%;
-      margin: 0 auto;
-      padding: 1rem;
-    }
-    .chat-container {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding-bottom: 1rem;
-      min-height: 12rem;
-    }
-    .welcome {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 1rem;
-      text-align: center;
-      color: var(--text-muted);
-    }
-    .welcome-icon {
-      width: 4rem;
-      height: 4rem;
-      border-radius: var(--radius-lg);
-      background: rgba(51, 65, 85, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .welcome-icon svg { width: 2rem; height: 2rem; color: #a78bfa; }
-    .welcome p:first-of-type { font-size: 0.875rem; font-weight: 500; color: #cbd5e1; }
-    .welcome p:last-of-type { font-size: 0.75rem; margin-top: 0.25rem; max-width: 15rem; }
-    .row { display: flex; }
-    .row.user { justify-content: flex-end; }
-    .row.bot { justify-content: flex-start; }
-    .bubble {
-      max-width: 85%;
-      padding: 0.625rem 1rem;
-      border-radius: var(--radius-lg);
-      font-size: 0.9375rem;
-      line-height: 1.4;
-    }
-    .row.user .bubble {
-      background: var(--bg-bubble-user);
-      color: #fff;
-      border-bottom-right-radius: 0.25rem;
-    }
-    .row.bot .bubble {
-      background: var(--bg-bubble-bot);
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 0.25rem;
-    }
-    .form-wrap { flex-shrink: 0; padding-top: 0.5rem; }
-    .chat-form {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .chat-input {
-      flex: 1;
-      min-width: 0;
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius-lg);
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font: inherit;
-      font-size: 1rem;
-    }
-    .chat-input::placeholder { color: var(--text-muted); }
-    .chat-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
-    }
-    .chat-input:disabled { opacity: 0.7; cursor: not-allowed; }
-    .send-btn {
-      flex-shrink: 0;
-      width: 3rem;
-      height: 3rem;
-      border: none;
-      border-radius: var(--radius-lg);
-      background: var(--accent);
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
-      transition: background 0.2s, transform 0.1s;
-    }
-    .send-btn:hover:not(:disabled) { background: #7c3aed; }
-    .send-btn:active:not(:disabled) { transform: scale(0.95); }
-    .send-btn:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--accent);
-    }
-    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .send-btn svg { width: 1.25rem; height: 1.25rem; }
-    @media (min-width: 640px) {
-      .bubble { max-width: 75%; }
-    }
-  </style>
 </head>
-<body>
-  <header class="header">
-    <div class="header-inner">
-      <div class="header-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="header-title">Asistente</h1>
-        <p class="header-status">En línea</p>
-      </div>
+<body class="bg-[#0a0a0b] text-zinc-100 font-sans antialiased min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0b]/80 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14 sm:h-16">
+      <a href="#" class="flex items-center gap-2 text-zinc-100 hover:text-white transition">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <span class="font-semibold text-sm sm:text-base">Asistente IA</span>
+      </a>
+      <nav class="flex items-center gap-1 sm:gap-2">
+        <a href="#chat" class="text-zinc-400 hover:text-zinc-100 text-sm px-3 py-2 rounded-lg hover:bg-white/5 transition">Producto</a>
+        <a href="#" class="text-zinc-400 hover:text-zinc-100 text-sm px-3 py-2 rounded-lg hover:bg-white/5 transition hidden sm:inline">Recursos</a>
+        <a href="#chat" class="ml-1 sm:ml-2 text-sm font-medium px-4 py-2 rounded-lg bg-white text-zinc-900 hover:bg-zinc-200 transition">Probar gratis</a>
+      </nav>
     </div>
   </header>
 
-  <main class="main">
-    <div id="chat-container" class="chat-container">
-      <div id="welcome" class="welcome">
-        <div class="welcome-icon">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
+  <main>
+    <!-- Hero -->
+    <section class="pt-10 sm:pt-16 pb-12 sm:pb-16 px-4 sm:px-6">
+      <div class="max-w-3xl mx-auto text-center">
+        <p class="text-violet-400 text-sm font-medium mb-4">Asistencia inteligente 24/7</p>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-zinc-100 leading-tight">
+          Respuestas al instante.<br class="hidden sm:block" />
+          <span class="text-zinc-400">Sin esperas.</span>
+        </h1>
+        <p class="mt-4 sm:mt-6 text-zinc-400 text-base sm:text-lg max-w-xl mx-auto">
+          Conecta con un asistente que entiende contexto, resuelve dudas y escala tu atención al cliente.
+        </p>
+        <!-- Social Proof -->
+        <div class="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-zinc-500 text-sm">
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+            Respuesta en segundos
+          </span>
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.892.65 1.814 1.51 2.166 2.5a11.954 11.954 0 01-2.166 2.5A11.954 11.954 0 0110 16.056a11.954 11.954 0 01-7.834-2.556C1.814 12.49.892 11.63 0 10.999A11.954 11.954 0 0110 1.944z" clip-rule="evenodd" /></svg>
+            Privacidad garantizada
+          </span>
+          <span class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+            Sin tarjeta de crédito
+          </span>
         </div>
-        <p>¿En qué puedo ayudarte?</p>
-        <p>Escribe un mensaje y pulsa enviar.</p>
       </div>
-    </div>
+    </section>
 
-    <div class="form-wrap">
-      <form id="chat-form" class="chat-form">
-        <input type="text" id="message-input" class="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off" />
-        <button type="submit" id="send-btn" class="send-btn" aria-label="Enviar mensaje">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
-        </button>
-      </form>
-    </div>
+    <!-- Chat Section (Card) -->
+    <section id="chat" class="px-4 sm:px-6 pb-16 sm:pb-24">
+      <div class="max-w-2xl mx-auto">
+        <div class="rounded-xl sm:rounded-2xl bg-zinc-900/80 border border-white/5 shadow-card hover:shadow-card-hover transition-shadow overflow-hidden">
+          <!-- Card header -->
+          <div class="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-white/5 bg-zinc-800/50">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h2 class="font-semibold text-zinc-100 text-sm sm:text-base">Asistente</h2>
+              <p class="text-xs text-zinc-500">En línea · Responde al instante</p>
+            </div>
+          </div>
+          <!-- Messages area (scroll) -->
+          <div id="chat-container" class="overflow-y-auto overflow-x-hidden flex flex-col gap-4 p-4 sm:p-5 min-h-[240px] max-h-[50vh] sm:max-h-[380px] scroll-smooth" style="scrollbar-gutter: stable;">
+            <div id="welcome" class="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+              <div class="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center mb-4">
+                <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <p class="text-sm font-medium text-zinc-300">¿En qué puedo ayudarte?</p>
+              <p class="text-xs text-zinc-500 mt-1 max-w-[220px]">Escribe abajo y pulsa Enter o el botón de enviar.</p>
+            </div>
+          </div>
+          <!-- Search-style input -->
+          <div class="p-4 sm:p-5 pt-0 border-t border-white/5 bg-zinc-800/30">
+            <form id="chat-form" class="flex gap-2 items-center rounded-lg border border-white/10 bg-zinc-800/80 focus-within:border-violet-500/50 focus-within:ring-1 focus-within:ring-violet-500/30 transition">
+              <span class="pl-4 text-zinc-500 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              <input type="text" id="message-input" placeholder="Escribe tu mensaje..." autocomplete="off" class="flex-1 min-w-0 py-3 pr-2 bg-transparent text-zinc-100 placeholder-zinc-500 text-sm sm:text-base focus:outline-none" />
+              <button type="submit" id="send-btn" class="flex-shrink-0 m-1.5 w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 hover:from-violet-600 hover:to-violet-700 text-white flex items-center justify-center transition disabled:opacity-50 disabled:pointer-events-none" aria-label="Enviar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -231,9 +137,12 @@
       function addMessage(text, isUser) {
         if (welcome && welcome.parentNode) welcome.parentNode.removeChild(welcome);
         var row = document.createElement('div');
-        row.className = 'row ' + (isUser ? 'user' : 'bot');
+        row.className = 'flex ' + (isUser ? 'justify-end' : 'justify-start');
         var bubble = document.createElement('div');
-        bubble.className = 'bubble';
+        bubble.className = 'max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-lg text-sm ' +
+          (isUser
+            ? 'bg-gradient-to-br from-violet-500 to-violet-600 text-white'
+            : 'bg-zinc-800 text-zinc-200 border border-white/5');
         bubble.textContent = text;
         row.appendChild(bubble);
         chatContainer.appendChild(row);
