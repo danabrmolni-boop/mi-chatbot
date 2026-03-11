@@ -124,11 +124,14 @@
 
   <script>
     (function () {
+      var API_URL = 'https://smart-items-go.loca.lt/ask';
+
       var chatContainer = document.getElementById('chat-container');
       var welcome = document.getElementById('welcome');
       var form = document.getElementById('chat-form');
       var input = document.getElementById('message-input');
       var sendBtn = document.getElementById('send-btn');
+      var sendBtnDefaultHtml = sendBtn ? sendBtn.innerHTML : '';
 
       function scrollToBottom() {
         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -149,23 +152,73 @@
         scrollToBottom();
       }
 
+      function addTyping() {
+        if (welcome && welcome.parentNode) welcome.parentNode.removeChild(welcome);
+        var row = document.createElement('div');
+        row.className = 'flex justify-start';
+        var bubble = document.createElement('div');
+        bubble.className = 'max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-lg text-sm bg-zinc-800 text-zinc-300 border border-white/5';
+        bubble.innerHTML = '<span class=\"inline-flex items-center gap-2\">' +
+          '<span class=\"inline-block w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce\" style=\"animation-delay:0ms\"></span>' +
+          '<span class=\"inline-block w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce\" style=\"animation-delay:120ms\"></span>' +
+          '<span class=\"inline-block w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce\" style=\"animation-delay:240ms\"></span>' +
+          '<span class=\"text-zinc-500\">Pensando…</span>' +
+          '</span>';
+        row.appendChild(bubble);
+        chatContainer.appendChild(row);
+        scrollToBottom();
+        return row;
+      }
+
       function setLoading(loading) {
         sendBtn.disabled = loading;
         input.disabled = loading;
+        if (!sendBtn) return;
+        sendBtn.setAttribute('aria-busy', loading ? 'true' : 'false');
+        if (loading) {
+          sendBtn.innerHTML = '<svg class=\"w-4 h-4 animate-spin\" fill=\"none\" viewBox=\"0 0 24 24\">' +
+            '<circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle>' +
+            '<path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z\"></path>' +
+            '</svg>';
+        } else {
+          sendBtn.innerHTML = sendBtnDefaultHtml;
+        }
       }
 
-      form.addEventListener('submit', function (e) {
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         var text = (input.value || '').trim();
         if (!text) return;
         input.value = '';
         addMessage(text, true);
         setLoading(true);
-        setTimeout(function () {
-          addMessage('Gracias por tu mensaje. Aquí iría la respuesta del bot.', false);
+        var typingEl = addTyping();
+        try {
+          var res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+          });
+
+          if (!res.ok) {
+            throw new Error('HTTP ' + res.status);
+          }
+
+          var data = await res.json();
+          var reply = (data && typeof data.reply === 'string') ? data.reply : null;
+          if (!reply) {
+            throw new Error('Respuesta inválida (falta campo reply)');
+          }
+
+          if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+          addMessage(reply, false);
+        } catch (err) {
+          if (typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl);
+          addMessage('No pude conectar con la API. Intenta de nuevo. (' + (err && err.message ? err.message : 'error') + ')', false);
+        } finally {
           setLoading(false);
           scrollToBottom();
-        }, 600);
+        }
       });
 
       if (input) input.focus();
